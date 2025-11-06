@@ -2,3 +2,6 @@ project_id = "mjybvfsmxjfjrqfzurcv"
 
 [functions.analyze-diagnostic]
 verify_jwt = true
+
+[functions.generate-work-plan]
+verify_jwt = true

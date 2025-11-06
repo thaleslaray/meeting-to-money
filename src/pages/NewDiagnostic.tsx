@@ -36,6 +36,7 @@ const NewDiagnostic = () => {
   const [planValidation, setPlanValidation] = useState<ValidationResult | null>(null);
   const [pricingValidation, setPricingValidation] = useState<ValidationResult | null>(null);
   const [qualityScore, setQualityScore] = useState<number | null>(null);
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -140,85 +141,6 @@ const NewDiagnostic = () => {
     const title = `Diagnóstico ${sector} - ${timestamp}`;
     
     return { title, sector };
-  };
-
-  const generateMockPlan = (suggestions: AutomationSuggestion[]): string => {
-    const totalDays = suggestions.reduce((sum, s) => sum + s.estimatedDays, 0);
-    const avgComplexity = suggestions.some(s => s.complexity === 'advanced') ? 'Alta' 
-      : suggestions.some(s => s.complexity === 'moderate') ? 'Média' : 'Baixa';
-
-    return `PLANO DE TRABALHO - Automações Selecionadas
-
-📋 RESUMO
-- Automações: ${suggestions.length}
-- Prazo estimado: ${totalDays} dias úteis
-- Complexidade geral: ${avgComplexity}
-
-🎯 AUTOMAÇÕES INCLUÍDAS
-${suggestions.map((s, i) => `${i + 1}. ${s.name}
-   - Impacto: ${s.impact === 'high' ? 'Alto' : s.impact === 'medium' ? 'Médio' : 'Baixo'}
-   - Tempo: ${s.estimatedDays} dias
-   - Ferramentas: ${s.tools}`).join('\n\n')}
-
-📅 FASES DE IMPLEMENTAÇÃO
-Fase 1 (Dias 1-${Math.ceil(totalDays * 0.3)}): Planejamento e configuração inicial
-- Levantamento detalhado de requisitos
-- Configuração de contas e integrações
-- Definição de fluxos de trabalho
-
-Fase 2 (Dias ${Math.ceil(totalDays * 0.3) + 1}-${Math.ceil(totalDays * 0.7)}): Desenvolvimento
-- Implementação das automações selecionadas
-- Testes internos
-- Ajustes e otimizações
-
-Fase 3 (Dias ${Math.ceil(totalDays * 0.7) + 1}-${totalDays}): Entrega e treinamento
-- Testes com dados reais
-- Documentação
-- Treinamento da equipe
-
-✅ BENEFÍCIOS ESPERADOS
-- Redução de tempo em tarefas manuais: 60-80%
-- Melhoria na taxa de resposta: 40-60%
-- Padronização de processos
-- Escalabilidade do negócio`;
-  };
-
-  const generateMockPricing = (suggestions: AutomationSuggestion[]): string => {
-    const totalDays = suggestions.reduce((sum, s) => sum + s.estimatedDays, 0);
-    const hourlyRate = 150;
-    const hoursPerDay = 8;
-    
-    const timeBased = totalDays * hoursPerDay * hourlyRate;
-    const complexityMultiplier = suggestions.some(s => s.complexity === 'advanced') ? 1.3 : 1.0;
-    const complexityBased = Math.round(timeBased * complexityMultiplier);
-    
-    const impactScore = suggestions.reduce((sum, s) => 
-      sum + (s.impact === 'high' ? 3 : s.impact === 'medium' ? 2 : 1), 0);
-    const valueBased = Math.round(timeBased * (1 + impactScore / 10));
-
-    return `ORIENTAÇÃO DE PRECIFICAÇÃO
-
-📊 METODOLOGIA 1: TIME-BASED (Baseado em Tempo)
-Cálculo: ${totalDays} dias × ${hoursPerDay} horas × R$ ${hourlyRate}/hora
-Valor sugerido: R$ ${timeBased.toLocaleString('pt-BR')} - R$ ${Math.round(timeBased * 1.2).toLocaleString('pt-BR')}
-
-🎯 METODOLOGIA 2: COMPLEXITY-BASED (Baseado em Complexidade)
-Análise: Complexidade ${suggestions.some(s => s.complexity === 'advanced') ? 'Alta' : suggestions.some(s => s.complexity === 'moderate') ? 'Média' : 'Baixa'}
-Valor sugerido: R$ ${complexityBased.toLocaleString('pt-BR')} - R$ ${Math.round(complexityBased * 1.3).toLocaleString('pt-BR')}
-
-💎 METODOLOGIA 3: VALUE-BASED (Baseado em Valor Entregue)
-Impacto esperado: ${impactScore > 10 ? 'Muito Alto' : impactScore > 6 ? 'Alto' : 'Médio'}
-Valor sugerido: R$ ${valueBased.toLocaleString('pt-BR')} - R$ ${Math.round(valueBased * 1.5).toLocaleString('pt-BR')}
-
-💡 RECOMENDAÇÃO
-Para este projeto, considerando:
-- ${suggestions.length} automações
-- ${totalDays} dias de trabalho
-- Impacto ${impactScore > 10 ? 'muito alto' : impactScore > 6 ? 'alto' : 'médio'} no negócio
-
-Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocaleString('pt-BR')} - R$ ${Math.max(timeBased, complexityBased, valueBased).toLocaleString('pt-BR')}
-
-⚠️ IMPORTANTE: Avalie o valor que o cliente perceberá. Se a economia mensal for superior a R$ 5.000, considere cobrar um percentual do valor economizado (20-30%).`;
   };
 
   const handleAnalyze = async () => {
@@ -330,23 +252,40 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
     setSelectedSuggestions(newSelected);
 
     if (diagnosticId && newSelected.length > 0) {
-      const selected = generatedSuggestions.filter(s => newSelected.includes(s.id));
+      setIsGeneratingPlan(true);
       
-      const plan = generateMockPlan(selected);
-      const pricing = generateMockPricing(selected);
-      
-      // Validar qualidade
-      const planVal = validatePlanQuality(plan);
-      const pricingVal = validatePricingQuality(pricing);
-      const avgScore = Math.round((planVal.score + pricingVal.score) / 2);
-      
-      setPlanDocument(plan);
-      setPricingAdvice(pricing);
-      setPlanValidation(planVal);
-      setPricingValidation(pricingVal);
-      setQualityScore(avgScore);
-
       try {
+        const selected = generatedSuggestions.filter(s => newSelected.includes(s.id));
+        
+        toast({
+          title: "Gerando plano e precificação...",
+          description: "Usando IA para criar conteúdo personalizado",
+        });
+
+        // Chamar edge function para gerar plano e precificação com IA
+        console.log('Chamando generate-work-plan com', selected.length, 'automações');
+        const { data: workPlanData, error: workPlanError } = await supabase.functions.invoke('generate-work-plan', {
+          body: { automations: selected }
+        });
+
+        if (workPlanError) {
+          console.error('Erro ao gerar plano:', workPlanError);
+          throw new Error('Erro ao gerar plano e precificação');
+        }
+
+        const { plan, pricing } = workPlanData;
+        
+        // Validar qualidade
+        const planVal = validatePlanQuality(plan);
+        const pricingVal = validatePricingQuality(pricing);
+        const avgScore = Math.round((planVal.score + pricingVal.score) / 2);
+        
+        setPlanDocument(plan);
+        setPricingAdvice(pricing);
+        setPlanValidation(planVal);
+        setPricingValidation(pricingVal);
+        setQualityScore(avgScore);
+
         await updateDiagnostic.mutateAsync({
           id: diagnosticId,
           updates: {
@@ -357,6 +296,11 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
           },
         });
         
+        toast({
+          title: "✅ Plano gerado com sucesso",
+          description: `Score de qualidade: ${avgScore}/100`,
+        });
+        
         if (avgScore < 70) {
           toast({
             title: "⚠️ Qualidade abaixo do esperado",
@@ -365,7 +309,14 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
           });
         }
       } catch (error) {
-        console.error("Erro ao atualizar diagnóstico:", error);
+        console.error("Erro ao gerar plano:", error);
+        toast({
+          title: "Erro ao gerar plano",
+          description: "Não foi possível gerar o plano. Tente novamente.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsGeneratingPlan(false);
       }
     } else if (newSelected.length === 0) {
       setPlanDocument("");
@@ -395,21 +346,36 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
   const handleRegenerate = async () => {
     if (!diagnosticId || selectedSuggestions.length === 0) return;
     
-    const selected = generatedSuggestions.filter(s => selectedSuggestions.includes(s.id));
-    const plan = generateMockPlan(selected);
-    const pricing = generateMockPricing(selected);
-    
-    const planVal = validatePlanQuality(plan);
-    const pricingVal = validatePricingQuality(pricing);
-    const avgScore = Math.round((planVal.score + pricingVal.score) / 2);
-    
-    setPlanDocument(plan);
-    setPricingAdvice(pricing);
-    setPlanValidation(planVal);
-    setPricingValidation(pricingVal);
-    setQualityScore(avgScore);
+    setIsGeneratingPlan(true);
     
     try {
+      const selected = generatedSuggestions.filter(s => selectedSuggestions.includes(s.id));
+      
+      toast({
+        title: "Re-gerando com IA...",
+        description: "Criando nova versão do plano e precificação",
+      });
+
+      const { data: workPlanData, error: workPlanError } = await supabase.functions.invoke('generate-work-plan', {
+        body: { automations: selected }
+      });
+
+      if (workPlanError) {
+        throw new Error('Erro ao re-gerar plano e precificação');
+      }
+
+      const { plan, pricing } = workPlanData;
+      
+      const planVal = validatePlanQuality(plan);
+      const pricingVal = validatePricingQuality(pricing);
+      const avgScore = Math.round((planVal.score + pricingVal.score) / 2);
+      
+      setPlanDocument(plan);
+      setPricingAdvice(pricing);
+      setPlanValidation(planVal);
+      setPricingValidation(pricingVal);
+      setQualityScore(avgScore);
+      
       await updateDiagnostic.mutateAsync({
         id: diagnosticId,
         updates: { 
@@ -420,11 +386,18 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
       });
       
       toast({
-        title: "Conteúdo re-gerado",
+        title: "Conteúdo re-gerado com sucesso",
         description: `Novo score de qualidade: ${avgScore}/100`,
       });
     } catch (error) {
       console.error("Erro ao re-gerar:", error);
+      toast({
+        title: "Erro ao re-gerar",
+        description: "Não foi possível re-gerar o conteúdo. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingPlan(false);
     }
   };
 
@@ -550,11 +523,11 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
                 {generatedSuggestions
                   .sort((a, b) => b.priorityScore - a.priorityScore)
                   .map((suggestion) => (
-                    <AutomationSuggestionCard
+                     <AutomationSuggestionCard
                       key={suggestion.id}
                       suggestion={suggestion}
                       selected={selectedSuggestions.includes(suggestion.id)}
-                      onToggle={handleToggleSuggestion}
+                      onToggle={isGeneratingPlan ? undefined : handleToggleSuggestion}
                     />
                   ))}
               </div>
@@ -563,6 +536,23 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
             {/* Plan Document Section */}
             {selectedSuggestions.length > 0 && (
               <>
+                {isGeneratingPlan && (
+                  <Card className="p-6">
+                    <div className="flex items-center justify-center py-12">
+                      <div className="text-center">
+                        <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-foreground mb-2">
+                          Gerando plano e precificação com IA...
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Isso pode levar alguns segundos
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                )}
+                
+                {!isGeneratingPlan && planDocument && (
                 <Card className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start gap-3 flex-1">
@@ -627,7 +617,9 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
                     </div>
                   )}
                 </Card>
+                )}
 
+                {!isGeneratingPlan && pricingAdvice && (
                 <Card className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start gap-3 flex-1">
@@ -678,7 +670,9 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
                     </div>
                   </div>
                 </Card>
+                )}
 
+                {!isGeneratingPlan && planDocument && pricingAdvice && (
                 <div className="mt-8 flex justify-end">
                   <Button
                     variant="hero"
@@ -694,6 +688,7 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </div>
+                )}
               </>
             )}
           </div>
