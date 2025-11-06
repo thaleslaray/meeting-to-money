@@ -1,22 +1,38 @@
+import { useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { AutomationSuggestionCard } from "@/components/diagnostics/AutomationSuggestionCard";
-import { ArrowLeft, Copy, FileText, DollarSign, Calendar, AlertCircle } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { ArrowLeft, Copy, FileText, DollarSign, Calendar, AlertCircle, Trash2 } from "lucide-react";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useDiagnostic } from "@/hooks/useDiagnostic";
+import { useDeleteDiagnostic } from "@/hooks/useDeleteDiagnostic";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const DiagnosticDetail = () => {
   const { id } = useParams();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const { data: diagnostic, isLoading, error } = useDiagnostic(id);
+  const deleteDiagnostic = useDeleteDiagnostic();
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -24,6 +40,28 @@ const DiagnosticDetail = () => {
       title: "Copiado!",
       description: `${label} copiado para a área de transferência.`,
     });
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteDiagnostic.mutateAsync(id);
+      toast({
+        title: "Diagnóstico excluído",
+        description: "O diagnóstico foi removido com sucesso.",
+      });
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Erro ao excluir diagnóstico:", error);
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o diagnóstico. Tente novamente.",
+        variant: "destructive",
+      });
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -104,8 +142,8 @@ const DiagnosticDetail = () => {
               </Link>
             </Button>
             
-            <div className="flex items-start justify-between">
-              <div>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
                 <h1 className="text-3xl font-bold text-foreground mb-2">
                   {diagnostic.title}
                 </h1>
@@ -130,6 +168,29 @@ const DiagnosticDetail = () => {
                   </Badge>
                 </div>
               </div>
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" disabled={isDeleting}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Excluir
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem certeza que deseja excluir este diagnóstico? Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Excluir
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
 

@@ -77,12 +77,39 @@ export type Database = {
         }
         Relationships: []
       }
+      usage_limits: {
+        Row: {
+          created_at: string | null
+          diagnostics_count: number | null
+          id: string
+          month_year: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          diagnostics_count?: number | null
+          id?: string
+          month_year: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          diagnostics_count?: number | null
+          id?: string
+          month_year?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_and_increment_usage: { Args: { p_user_id: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never

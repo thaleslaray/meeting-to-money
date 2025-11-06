@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreateDiagnostic } from "@/hooks/useCreateDiagnostic";
 import { useUpdateDiagnostic } from "@/hooks/useUpdateDiagnostic";
+import { checkAndIncrementUsage } from "@/hooks/useUsageLimit";
 import { AutomationSuggestion } from "@/types/database";
 
 const NewDiagnostic = () => {
@@ -238,6 +239,19 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
     setIsAnalyzing(true);
 
     try {
+      // Verificar limite de uso
+      const usageCheck = await checkAndIncrementUsage(user.id);
+      
+      if (!usageCheck.allowed) {
+        toast({
+          title: "Limite atingido",
+          description: `Você atingiu o limite de ${usageCheck.limit} diagnósticos por mês. O limite será reiniciado no próximo mês.`,
+          variant: "destructive",
+        });
+        setIsAnalyzing(false);
+        return;
+      }
+
       const suggestions = generateMockSuggestions(inputText);
       setGeneratedSuggestions(suggestions);
 

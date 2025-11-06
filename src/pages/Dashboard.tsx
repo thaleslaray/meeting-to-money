@@ -9,6 +9,27 @@ import { Link } from "react-router-dom";
 const Dashboard = () => {
   const { data: diagnostics = [], isLoading, error } = useDiagnostics();
 
+  // Calcular métricas reais
+  const totalDiagnostics = diagnostics?.length || 0;
+
+  const thisWeekDiagnostics = diagnostics?.filter(d => {
+    const createdDate = new Date(d.created_at);
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    return createdDate >= weekAgo;
+  }).length || 0;
+
+  const totalAutomations = diagnostics?.reduce((sum, d) => 
+    sum + (d.generated_suggestions?.length || 0), 0) || 0;
+
+  const avgAnalysisTime = diagnostics?.length > 0
+    ? Math.round(diagnostics.reduce((sum, d) => {
+        const created = new Date(d.created_at);
+        const updated = new Date(d.updated_at);
+        return sum + (updated.getTime() - created.getTime());
+      }, 0) / diagnostics.length / 1000 / 60)
+    : 0;
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -34,8 +55,10 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Diagnósticos esta semana</p>
-                <p className="text-3xl font-bold text-foreground">8</p>
-                <p className="text-sm text-success mt-1">+25% vs. semana anterior</p>
+                <p className="text-3xl font-bold text-foreground">{thisWeekDiagnostics}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {totalDiagnostics > 0 ? `${totalDiagnostics} no total` : 'Nenhum diagnóstico'}
+                </p>
               </div>
               <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-primary" />
@@ -47,8 +70,10 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Total de sugestões</p>
-                <p className="text-3xl font-bold text-foreground">42</p>
-                <p className="text-sm text-muted-foreground mt-1">Em 3 diagnósticos</p>
+                <p className="text-3xl font-bold text-foreground">{totalAutomations}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {totalDiagnostics > 0 ? `Em ${totalDiagnostics} diagnóstico${totalDiagnostics !== 1 ? 's' : ''}` : 'Nenhuma sugestão'}
+                </p>
               </div>
               <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center">
                 <FileText className="w-6 h-6 text-accent" />
@@ -60,7 +85,9 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Tempo médio de análise</p>
-                <p className="text-3xl font-bold text-foreground">2min</p>
+                <p className="text-3xl font-bold text-foreground">
+                  {avgAnalysisTime > 0 ? `${avgAnalysisTime}min` : '-'}
+                </p>
                 <p className="text-sm text-muted-foreground mt-1">Por diagnóstico</p>
               </div>
               <div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center">

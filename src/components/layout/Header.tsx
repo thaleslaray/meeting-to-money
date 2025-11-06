@@ -1,12 +1,15 @@
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Sparkles, LogOut } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUsageLimit } from "@/hooks/useUsageLimit";
 
 export const Header = () => {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const isLanding = location.pathname === "/";
+  const { data: usageLimit } = useUsageLimit();
 
   const handleSignOut = async () => {
     await signOut();
@@ -25,6 +28,18 @@ export const Header = () => {
         <nav className="flex items-center gap-4">
           {user ? (
             <>
+              {usageLimit && (
+                <Badge 
+                  variant="outline" 
+                  className={
+                    usageLimit.current >= usageLimit.limit * 0.8
+                      ? "bg-warning-light text-warning border-warning"
+                      : "bg-muted text-muted-foreground border-border"
+                  }
+                >
+                  {usageLimit.current}/{usageLimit.limit} diagnósticos este mês
+                </Badge>
+              )}
               <Button variant="ghost" asChild>
                 <Link to="/dashboard">Dashboard</Link>
               </Button>
