@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import NewDiagnostic from "./pages/NewDiagnostic";
 import DiagnosticDetail from "./pages/DiagnosticDetail";
 import AdminPrompts from "./pages/AdminPrompts";
+import AdminAutomations from "./pages/AdminAutomations";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
@@ -56,6 +57,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AdminPrompts />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/automacoes"
+              element={
+                <ProtectedRoute>
+                  <AdminAutomations />
                 </ProtectedRoute>
               }
             />

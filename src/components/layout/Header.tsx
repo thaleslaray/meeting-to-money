@@ -46,12 +46,20 @@ export const Header = () => {
                 <Link to="/dashboard">Dashboard</Link>
               </Button>
               {isAdmin && (
-                <Button variant="ghost" asChild>
-                  <Link to="/admin/prompts">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Prompts
-                  </Link>
-                </Button>
+                <>
+                  <Button variant="ghost" asChild>
+                    <Link to="/admin/prompts">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Prompts
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" asChild>
+                    <Link to="/admin/automacoes">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Automações
+                    </Link>
+                  </Button>
+                </>
               )}
               <Button variant="ghost" onClick={handleSignOut}>
                 <LogOut className="w-4 h-4 mr-2" />
