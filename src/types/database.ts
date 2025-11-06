@@ -19,6 +19,7 @@ export interface Diagnostic {
   selected_automations: string[];
   plan_document: string | null;
   pricing_advice: string | null;
+  quality_score: number | null;
   status: 'pending' | 'in_progress' | 'completed';
   created_at: string;
   updated_at: string;
@@ -43,5 +44,6 @@ export interface DiagnosticUpdate {
   selected_automations?: string[];
   plan_document?: string;
   pricing_advice?: string;
+  quality_score?: number;
   status?: 'pending' | 'in_progress' | 'completed';
 }

@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { QualityBadge } from "@/components/diagnostics/QualityBadge";
 import { Calendar, ChevronRight, FileText, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useDeleteDiagnostic } from "@/hooks/useDeleteDiagnostic";
@@ -25,6 +26,7 @@ export interface DiagnosticCardProps {
   suggestionsCount: number;
   createdAt: string;
   status: "pending" | "completed" | "in_progress";
+  qualityScore?: number | null;
 }
 
 export const DiagnosticCard = ({
@@ -34,6 +36,7 @@ export const DiagnosticCard = ({
   suggestionsCount,
   createdAt,
   status,
+  qualityScore,
 }: DiagnosticCardProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const deleteDiagnostic = useDeleteDiagnostic();
@@ -95,6 +98,11 @@ export const DiagnosticCard = ({
           <span className="font-medium text-foreground">{suggestionsCount}</span>
           <span>sugestões</span>
         </div>
+        {qualityScore && (
+          <div className="ml-auto">
+            <QualityBadge score={qualityScore} />
+          </div>
+        )}
       </div>
 
       <div className="flex gap-2">

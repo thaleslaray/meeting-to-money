@@ -190,6 +190,7 @@ const Dashboard = () => {
                     suggestionsCount={diagnostic.generated_suggestions.length}
                     createdAt={new Date(diagnostic.created_at).toLocaleDateString('pt-BR')}
                     status={diagnostic.status}
+                    qualityScore={diagnostic.quality_score}
                   />
                 ))}
               </div>

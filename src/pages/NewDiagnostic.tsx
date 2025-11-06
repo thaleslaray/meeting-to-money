@@ -6,9 +6,11 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AutomationSuggestionCard } from "@/components/diagnostics/AutomationSuggestionCard";
+import { QualityBadge } from "@/components/diagnostics/QualityBadge";
 import { mockInputText } from "@/data/mockData";
-import { Sparkles, Loader2, Copy, CheckCircle2, FileText, DollarSign, ArrowRight } from "lucide-react";
+import { Sparkles, Loader2, Copy, CheckCircle2, FileText, DollarSign, ArrowRight, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreateDiagnostic } from "@/hooks/useCreateDiagnostic";
@@ -17,6 +19,7 @@ import { checkAndIncrementUsage } from "@/hooks/useUsageLimit";
 import { AutomationSuggestion } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
 import { diagnosticInputSchema, sanitizeInput } from "@/lib/validation";
+import { validatePlanQuality, validatePricingQuality, ValidationResult } from "@/lib/qualityValidation";
 
 const NewDiagnostic = () => {
   const [title, setTitle] = useState("");
@@ -30,6 +33,9 @@ const NewDiagnostic = () => {
   const [planDocument, setPlanDocument] = useState<string>("");
   const [pricingAdvice, setPricingAdvice] = useState<string>("");
   const [errors, setErrors] = useState<any>({});
+  const [planValidation, setPlanValidation] = useState<ValidationResult | null>(null);
+  const [pricingValidation, setPricingValidation] = useState<ValidationResult | null>(null);
+  const [qualityScore, setQualityScore] = useState<number | null>(null);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -329,8 +335,16 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
       const plan = generateMockPlan(selected);
       const pricing = generateMockPricing(selected);
       
+      // Validar qualidade
+      const planVal = validatePlanQuality(plan);
+      const pricingVal = validatePricingQuality(pricing);
+      const avgScore = Math.round((planVal.score + pricingVal.score) / 2);
+      
       setPlanDocument(plan);
       setPricingAdvice(pricing);
+      setPlanValidation(planVal);
+      setPricingValidation(pricingVal);
+      setQualityScore(avgScore);
 
       try {
         await updateDiagnostic.mutateAsync({
@@ -339,14 +353,26 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
             selected_automations: newSelected,
             plan_document: plan,
             pricing_advice: pricing,
+            quality_score: avgScore,
           },
         });
+        
+        if (avgScore < 70) {
+          toast({
+            title: "⚠️ Qualidade abaixo do esperado",
+            description: "O conteúdo gerado pode necessitar revisão. Veja os detalhes abaixo.",
+            variant: "default",
+          });
+        }
       } catch (error) {
         console.error("Erro ao atualizar diagnóstico:", error);
       }
     } else if (newSelected.length === 0) {
       setPlanDocument("");
       setPricingAdvice("");
+      setPlanValidation(null);
+      setPricingValidation(null);
+      setQualityScore(null);
     }
   };
 
@@ -364,6 +390,42 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
       title: "Exemplo carregado",
       description: "Agora clique em 'Analisar' para ver os resultados.",
     });
+  };
+
+  const handleRegenerate = async () => {
+    if (!diagnosticId || selectedSuggestions.length === 0) return;
+    
+    const selected = generatedSuggestions.filter(s => selectedSuggestions.includes(s.id));
+    const plan = generateMockPlan(selected);
+    const pricing = generateMockPricing(selected);
+    
+    const planVal = validatePlanQuality(plan);
+    const pricingVal = validatePricingQuality(pricing);
+    const avgScore = Math.round((planVal.score + pricingVal.score) / 2);
+    
+    setPlanDocument(plan);
+    setPricingAdvice(pricing);
+    setPlanValidation(planVal);
+    setPricingValidation(pricingVal);
+    setQualityScore(avgScore);
+    
+    try {
+      await updateDiagnostic.mutateAsync({
+        id: diagnosticId,
+        updates: { 
+          plan_document: plan, 
+          pricing_advice: pricing, 
+          quality_score: avgScore 
+        },
+      });
+      
+      toast({
+        title: "Conteúdo re-gerado",
+        description: `Novo score de qualidade: ${avgScore}/100`,
+      });
+    } catch (error) {
+      console.error("Erro ao re-gerar:", error);
+    }
   };
 
   return (
@@ -503,14 +565,34 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
               <>
                 <Card className="p-6">
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-3 flex-1">
                       <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                         <FileText className="w-5 h-5 text-primary" />
                       </div>
-                      <div>
-                        <h3 className="text-xl font-semibold text-foreground mb-1">
-                          Plano de Trabalho
-                        </h3>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-xl font-semibold text-foreground">
+                            Plano de Trabalho
+                          </h3>
+                          {qualityScore && <QualityBadge score={qualityScore} />}
+                          {planValidation && planValidation.issues.length > 0 && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <AlertCircle className="w-4 h-4 text-yellow-500" />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p className="font-semibold mb-2">Problemas identificados:</p>
+                                  <ul className="list-disc pl-4 space-y-1">
+                                    {planValidation.issues.map((issue, i) => (
+                                      <li key={i} className="text-sm">{issue}</li>
+                                    ))}
+                                  </ul>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground">
                           Baseado nas {selectedSuggestions.length} automações selecionadas
                         </p>
@@ -531,18 +613,50 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
                       {planDocument}
                     </div>
                   </div>
+                  
+                  {qualityScore && qualityScore < 70 && (
+                    <div className="mt-4">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleRegenerate}
+                      >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Re-gerar com melhor qualidade
+                      </Button>
+                    </div>
+                  )}
                 </Card>
 
                 <Card className="p-6">
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-3 flex-1">
                       <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
                         <DollarSign className="w-5 h-5 text-success" />
                       </div>
-                      <div>
-                        <h3 className="text-xl font-semibold text-foreground mb-1">
-                          Orientação de Precificação
-                        </h3>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-xl font-semibold text-foreground">
+                            Orientação de Precificação
+                          </h3>
+                          {pricingValidation && pricingValidation.issues.length > 0 && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <AlertCircle className="w-4 h-4 text-yellow-500" />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p className="font-semibold mb-2">Problemas identificados:</p>
+                                  <ul className="list-disc pl-4 space-y-1">
+                                    {pricingValidation.issues.map((issue, i) => (
+                                      <li key={i} className="text-sm">{issue}</li>
+                                    ))}
+                                  </ul>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground">
                           3 metodologias com faixas de mercado
                         </p>

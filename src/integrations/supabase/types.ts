@@ -61,6 +61,7 @@ export type Database = {
           input_text: string
           plan_document: string | null
           pricing_advice: string | null
+          quality_score: number | null
           sector: string
           selected_automations: string[] | null
           status: string
@@ -75,6 +76,7 @@ export type Database = {
           input_text: string
           plan_document?: string | null
           pricing_advice?: string | null
+          quality_score?: number | null
           sector: string
           selected_automations?: string[] | null
           status?: string
@@ -89,6 +91,7 @@ export type Database = {
           input_text?: string
           plan_document?: string | null
           pricing_advice?: string | null
+          quality_score?: number | null
           sector?: string
           selected_automations?: string[] | null
           status?: string

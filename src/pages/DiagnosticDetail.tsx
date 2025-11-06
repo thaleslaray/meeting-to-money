@@ -17,6 +17,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { AutomationSuggestionCard } from "@/components/diagnostics/AutomationSuggestionCard";
+import { QualityBadge } from "@/components/diagnostics/QualityBadge";
 import { ArrowLeft, Copy, FileText, DollarSign, Calendar, AlertCircle, Trash2 } from "lucide-react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -166,6 +167,9 @@ const DiagnosticDetail = () => {
                       : diagnostic.status === 'in_progress' ? 'Em Progresso' 
                       : 'Pendente'}
                   </Badge>
+                  {diagnostic.quality_score && (
+                    <QualityBadge score={diagnostic.quality_score} />
+                  )}
                 </div>
               </div>
               
