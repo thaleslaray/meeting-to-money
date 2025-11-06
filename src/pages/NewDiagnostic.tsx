@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AutomationSuggestionCard } from "@/components/diagnostics/AutomationSuggestionCard";
 import { QualityBadge } from "@/components/diagnostics/QualityBadge";
+import { MarkdownRenderer } from "@/components/diagnostics/MarkdownRenderer";
 import { mockInputText, testInputText } from "@/data/mockData";
 import { Sparkles, Loader2, Copy, CheckCircle2, FileText, DollarSign, ArrowRight, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -622,11 +623,10 @@ const NewDiagnostic = () => {
                     </Button>
                   </div>
                   
-                  <div className="prose prose-sm max-w-none">
-                    <div className="p-4 rounded-lg bg-muted/50 border border-border font-mono text-xs whitespace-pre-wrap">
-                      {planDocument}
-                    </div>
-                  </div>
+                  <MarkdownRenderer 
+                    content={planDocument} 
+                    className="prose prose-sm max-w-none"
+                  />
                   
                   {qualityScore && qualityScore < 70 && (
                     <div className="mt-4">
@@ -688,11 +688,10 @@ const NewDiagnostic = () => {
                     </Button>
                   </div>
                   
-                  <div className="prose prose-sm max-w-none">
-                    <div className="p-4 rounded-lg bg-muted/50 border border-border font-mono text-xs whitespace-pre-wrap">
-                      {pricingAdvice}
-                    </div>
-                  </div>
+                  <MarkdownRenderer 
+                    content={pricingAdvice} 
+                    className="prose prose-sm max-w-none"
+                  />
                 </Card>
                 )}
 
