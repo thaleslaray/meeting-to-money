@@ -2,9 +2,20 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Header } from "@/components/layout/Header";
 import { Sparkles, Zap, Target, FileText, TrendingUp, CheckCircle2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 const Landing = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -30,13 +41,13 @@ const Landing = () => {
             
             <div className="flex items-center justify-center gap-4">
               <Button variant="hero" size="lg" asChild>
-                <Link to="/dashboard">
+                <Link to="/signup">
                   Começar agora
                   <Sparkles className="ml-2 w-5 h-5" />
                 </Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
-                <Link to="/dashboard">Ver exemplo</Link>
+                <Link to="/signup">Ver exemplo</Link>
               </Button>
             </div>
           </div>
@@ -183,7 +194,7 @@ const Landing = () => {
             Comece agora e transforme sua próxima reunião em uma proposta vendável em minutos.
           </p>
           <Button variant="secondary" size="lg" asChild>
-            <Link to="/dashboard">
+            <Link to="/signup">
               Acessar plataforma
               <Sparkles className="ml-2 w-5 h-5" />
             </Link>

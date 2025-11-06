@@ -2,11 +2,13 @@ import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DiagnosticCard } from "@/components/diagnostics/DiagnosticCard";
-import { mockDiagnostics } from "@/data/mockData";
-import { Plus, TrendingUp, FileText, Clock } from "lucide-react";
+import { useDiagnostics } from "@/hooks/useDiagnostics";
+import { Plus, TrendingUp, FileText, Clock, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Dashboard = () => {
+  const { data: diagnostics = [], isLoading, error } = useDiagnostics();
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -71,15 +73,38 @@ const Dashboard = () => {
         {/* Diagnostics List */}
         <div>
           <h2 className="text-xl font-semibold text-foreground mb-4">Diagnósticos recentes</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mockDiagnostics.map((diagnostic) => (
-              <DiagnosticCard key={diagnostic.id} {...diagnostic} />
-            ))}
-          </div>
+          
+          {isLoading && (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          )}
+          
+          {error && (
+            <Card className="p-8 text-center">
+              <p className="text-destructive">Erro ao carregar diagnósticos. Tente novamente.</p>
+            </Card>
+          )}
+          
+          {!isLoading && !error && diagnostics.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {diagnostics.map((diagnostic) => (
+                <DiagnosticCard 
+                  key={diagnostic.id}
+                  id={diagnostic.id}
+                  title={diagnostic.title}
+                  sector={diagnostic.sector}
+                  suggestionsCount={diagnostic.generated_suggestions.length}
+                  createdAt={new Date(diagnostic.created_at).toLocaleDateString('pt-BR')}
+                  status={diagnostic.status}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Empty State (hidden when there are diagnostics) */}
-        {mockDiagnostics.length === 0 && (
+        {/* Empty State */}
+        {!isLoading && !error && diagnostics.length === 0 && (
           <Card className="p-12 text-center">
             <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-foreground mb-2">
