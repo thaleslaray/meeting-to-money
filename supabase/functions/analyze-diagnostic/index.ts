@@ -42,11 +42,25 @@ serve(async (req) => {
       console.error('Error fetching automation library:', dbError);
     }
 
+    // Logs detalhados para validação
+    console.log('=== BANCO DE AUTOMAÇÕES ===');
+    console.log(`Setor consultado: ${sector}`);
+    console.log(`Automações encontradas: ${automations?.length || 0}`);
+    
+    if (automations && automations.length > 0) {
+      console.log('Automações no banco:');
+      automations.forEach(a => {
+        console.log(`  - ${a.name} [${a.sector}] - Keywords: ${a.keywords?.join(', ')}`);
+      });
+    } else {
+      console.log('⚠️ Nenhuma automação encontrada no banco para este setor/keywords');
+    }
+
     const automationContext = automations 
-      ? `\n\nBase de Conhecimento de Automações:\n${automations.map(a => 
-          `- ${a.name}: ${a.description} (Impacto: ${a.impact}, Complexidade: ${a.complexity}, Prazo: ${a.estimated_days} dias)`
+      ? `\n\n📚 BASE DE CONHECIMENTO DE AUTOMAÇÕES (${automations.length} disponíveis):\n${automations.map(a => 
+          `- ${a.name}: ${a.description} (Impacto: ${a.impact}, Complexidade: ${a.complexity}, Prazo: ${a.estimated_days} dias, Keywords: ${a.keywords?.join(', ')})`
         ).join('\n')}`
-      : '';
+      : '\n\n⚠️ Nenhuma automação encontrada no banco de conhecimento.';
 
     // Chamar Lovable AI
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -140,7 +154,13 @@ Setor: ${sector}${automationContext}`;
       ...s
     }));
 
-    console.log('Generated suggestions:', suggestions.length);
+    console.log('=== RESULTADO DA ANÁLISE ===');
+    console.log(`Sugestões geradas: ${suggestions.length}`);
+    console.log('Sugestões criadas:');
+    suggestions.forEach((s: any, i: number) => {
+      console.log(`  ${i + 1}. ${s.name} - Impacto: ${s.impact}, Complexidade: ${s.complexity}, Prazo: ${s.estimatedDays} dias`);
+    });
+    console.log('========================');
 
     return new Response(
       JSON.stringify({ suggestions }),

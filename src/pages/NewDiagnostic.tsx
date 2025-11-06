@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AutomationSuggestionCard } from "@/components/diagnostics/AutomationSuggestionCard";
 import { QualityBadge } from "@/components/diagnostics/QualityBadge";
-import { mockInputText } from "@/data/mockData";
+import { mockInputText, testInputText } from "@/data/mockData";
 import { Sparkles, Loader2, Copy, CheckCircle2, FileText, DollarSign, ArrowRight, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -343,6 +343,16 @@ const NewDiagnostic = () => {
     });
   };
 
+  const handleLoadTestCase = () => {
+    setTitle("Teste Banco de Automações - Vendas");
+    setSector("Vendas");
+    setInputText(testInputText);
+    toast({
+      title: "✅ Caso de teste carregado",
+      description: "Este caso ativa múltiplas automações do banco. Analise para validar.",
+    });
+  };
+
   const handleRegenerate = async () => {
     if (!diagnosticId || selectedSuggestions.length === 0) return;
     
@@ -453,9 +463,23 @@ const NewDiagnostic = () => {
                 <Label htmlFor="inputText" className={errors.inputText ? 'text-destructive' : ''}>
                   Resumo da Reunião
                 </Label>
-                <Button variant="ghost" size="sm" onClick={handleLoadExample}>
-                  Carregar exemplo
-                </Button>
+                <div className="flex gap-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="outline" size="sm" onClick={handleLoadTestCase}>
+                          🧪 Caso de Teste
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Carrega texto completo para validar banco de automações</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <Button variant="ghost" size="sm" onClick={handleLoadExample}>
+                    Exemplo rápido
+                  </Button>
+                </div>
               </div>
               
               <Textarea

@@ -98,6 +98,64 @@ Principais problemas identificados:
 
 Expectativa: Automatizar processos repetitivos e melhorar tempo de resposta`;
 
+// Texto de teste completo para validar banco de automações
+export const testInputText = `CASO DE TESTE - VALIDAÇÃO DO BANCO DE AUTOMAÇÕES
+
+SETOR: Vendas e Marketing
+EMPRESA: Tech Solutions Brasil
+
+PROBLEMAS IDENTIFICADOS:
+
+1. GESTÃO DE LEADS (keywords: lead, crm, captação)
+- Leads chegam por múltiplos canais (WhatsApp, site, email, telefone)
+- Demora média de 4 horas para primeira resposta
+- Perda de aproximadamente 30% dos leads por falta de follow-up
+- Planilhas Excel desatualizadas e duplicadas
+- Dificuldade em identificar leads qualificados
+
+2. ATENDIMENTO E COMUNICAÇÃO (keywords: atendimento, whatsapp, resposta automática)
+- Equipe responde manualmente cada mensagem no WhatsApp
+- Mensagens fora do horário comercial ficam sem resposta
+- Clientes reclamam de demora no atendimento
+- Respostas inconsistentes entre atendentes
+
+3. AGENDAMENTO (keywords: agendamento, calendário, reunião)
+- Agendamento de reuniões feito via WhatsApp/email
+- Conflitos de horário frequentes
+- Falta de lembretes automáticos
+- 20% de no-show em reuniões agendadas
+
+4. PROPOSTAS E CONTRATOS (keywords: proposta, contrato, documento)
+- Criação manual de propostas leva 2-3 horas cada
+- Erros de digitação em valores e dados
+- Contratos enviados com atraso
+- Dificuldade em rastrear status de propostas
+
+5. FOLLOW-UP E NUTRIÇÃO (keywords: follow-up, email marketing, nutrição)
+- Sem processo estruturado de nutrição de leads
+- Follow-up manual e inconsistente
+- Emails personalizados demoram muito para criar
+- Dificuldade em medir taxa de conversão
+
+6. RELATÓRIOS E ANÁLISE (keywords: dashboard, relatório, métricas, analytics)
+- Sem visibilidade de KPIs em tempo real
+- Relatórios criados manualmente toda semana
+- Dificuldade em identificar gargalos
+- Decisões baseadas em "achismo" ao invés de dados
+
+EXPECTATIVAS DO CLIENTE:
+- Reduzir tempo de resposta para menos de 30 minutos
+- Aumentar conversão de leads em 40%
+- Automatizar 80% das tarefas repetitivas
+- Ter visibilidade completa do funil de vendas
+- Implementação em até 45 dias
+
+OBSERVAÇÕES:
+- Equipe de 5 vendedores
+- Volume de 200-300 leads/mês
+- Orçamento: R$ 15.000 - R$ 25.000
+- Prioridade máxima: gestão de leads e atendimento`;
+
 export const mockPlanDocument = `# PLANO DE TRABALHO - IMOBILIÁRIA XYZ
 
 ## 1. RESUMO DO PROBLEMA
