@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      automation_library: {
+        Row: {
+          complexity: string
+          created_at: string
+          description: string
+          estimated_days: number
+          id: string
+          impact: string
+          keywords: string[]
+          name: string
+          sector: string
+          tools: string
+        }
+        Insert: {
+          complexity: string
+          created_at?: string
+          description: string
+          estimated_days: number
+          id?: string
+          impact: string
+          keywords: string[]
+          name: string
+          sector: string
+          tools: string
+        }
+        Update: {
+          complexity?: string
+          created_at?: string
+          description?: string
+          estimated_days?: number
+          id?: string
+          impact?: string
+          keywords?: string[]
+          name?: string
+          sector?: string
+          tools?: string
+        }
+        Relationships: []
+      }
       diagnostics: {
         Row: {
           created_at: string

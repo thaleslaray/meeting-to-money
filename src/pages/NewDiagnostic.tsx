@@ -4,6 +4,8 @@ import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { AutomationSuggestionCard } from "@/components/diagnostics/AutomationSuggestionCard";
 import { mockInputText } from "@/data/mockData";
 import { Sparkles, Loader2, Copy, CheckCircle2, FileText, DollarSign, ArrowRight } from "lucide-react";
@@ -13,8 +15,12 @@ import { useCreateDiagnostic } from "@/hooks/useCreateDiagnostic";
 import { useUpdateDiagnostic } from "@/hooks/useUpdateDiagnostic";
 import { checkAndIncrementUsage } from "@/hooks/useUsageLimit";
 import { AutomationSuggestion } from "@/types/database";
+import { supabase } from "@/integrations/supabase/client";
+import { diagnosticInputSchema, sanitizeInput } from "@/lib/validation";
 
 const NewDiagnostic = () => {
+  const [title, setTitle] = useState("");
+  const [sector, setSector] = useState("");
   const [inputText, setInputText] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -23,6 +29,7 @@ const NewDiagnostic = () => {
   const [generatedSuggestions, setGeneratedSuggestions] = useState<AutomationSuggestion[]>([]);
   const [planDocument, setPlanDocument] = useState<string>("");
   const [pricingAdvice, setPricingAdvice] = useState<string>("");
+  const [errors, setErrors] = useState<any>({});
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -209,23 +216,30 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
   };
 
   const handleAnalyze = async () => {
-    if (!inputText.trim()) {
+    // Validação com zod
+    const validationResult = diagnosticInputSchema.safeParse({
+      title: title.trim(),
+      sector: sector.trim(),
+      inputText: inputText.trim()
+    });
+
+    if (!validationResult.success) {
+      const fieldErrors: any = {};
+      validationResult.error.errors.forEach(err => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0]] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
       toast({
-        title: "Atenção",
-        description: "Por favor, insira o resumo da reunião antes de analisar.",
+        title: "Erro de validação",
+        description: "Por favor, corrija os campos destacados.",
         variant: "destructive",
       });
       return;
     }
 
-    if (inputText.length > 10000) {
-      toast({
-        title: "Texto muito longo",
-        description: "O resumo deve ter no máximo 10.000 caracteres.",
-        variant: "destructive",
-      });
-      return;
-    }
+    setErrors({});
 
     if (!user) {
       toast({
@@ -252,15 +266,31 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
         return;
       }
 
-      const suggestions = generateMockSuggestions(inputText);
+      // Chamar IA real para gerar sugestões
+      console.log('Chamando edge function analyze-diagnostic...');
+      const { data: aiResponse, error: aiError } = await supabase.functions.invoke('analyze-diagnostic', {
+        body: { 
+          inputText: sanitizeInput(inputText),
+          sector: sanitizeInput(sector)
+        }
+      });
+
+      if (aiError) {
+        console.error('Erro na edge function:', aiError);
+        throw new Error('Erro ao analisar com IA: ' + aiError.message);
+      }
+
+      if (!aiResponse?.suggestions || aiResponse.suggestions.length === 0) {
+        throw new Error('Nenhuma sugestão foi gerada pela IA');
+      }
+
+      const suggestions = aiResponse.suggestions;
       setGeneratedSuggestions(suggestions);
 
-      const { title, sector } = extractMetadata(inputText);
-
       const newDiagnostic = await createDiagnostic.mutateAsync({
-        title: title,
-        sector: sector,
-        input_text: inputText,
+        title: sanitizeInput(title),
+        sector: sanitizeInput(sector),
+        input_text: sanitizeInput(inputText),
         generated_suggestions: suggestions,
         selected_automations: [],
         status: 'completed',
@@ -350,23 +380,63 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
 
         {/* Input Section */}
         <Card className="p-6 mb-8">
-          <div className="mb-4 flex items-center justify-between">
-            <label className="text-sm font-medium text-foreground">
-              Resumo da Reunião
-            </label>
-            <Button variant="ghost" size="sm" onClick={handleLoadExample}>
-              Carregar exemplo
-            </Button>
-          </div>
-          
-          <Textarea
-            placeholder="Cole aqui o resumo ou transcrição da reunião com o cliente. Inclua informações sobre o negócio, principais problemas identificados, processos manuais, e expectativas do cliente..."
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            className="min-h-[200px] mb-4 font-mono text-sm"
-          />
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="title" className={errors.title ? 'text-destructive' : ''}>
+                Título do Diagnóstico
+              </Label>
+              <Input
+                id="title"
+                placeholder="Ex: Diagnóstico Vendas - Imobiliária"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className={errors.title ? 'border-destructive' : ''}
+              />
+              {errors.title && (
+                <p className="text-sm text-destructive mt-1">{errors.title}</p>
+              )}
+            </div>
 
-          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="sector" className={errors.sector ? 'text-destructive' : ''}>
+                Setor/Área
+              </Label>
+              <Input
+                id="sector"
+                placeholder="Ex: vendas, marketing, atendimento"
+                value={sector}
+                onChange={(e) => setSector(e.target.value)}
+                className={errors.sector ? 'border-destructive' : ''}
+              />
+              {errors.sector && (
+                <p className="text-sm text-destructive mt-1">{errors.sector}</p>
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="inputText" className={errors.inputText ? 'text-destructive' : ''}>
+                  Resumo da Reunião
+                </Label>
+                <Button variant="ghost" size="sm" onClick={handleLoadExample}>
+                  Carregar exemplo
+                </Button>
+              </div>
+              
+              <Textarea
+                id="inputText"
+                placeholder="Cole aqui o resumo ou transcrição da reunião com o cliente. Inclua informações sobre o negócio, principais problemas identificados, processos manuais, e expectativas do cliente..."
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                className={`min-h-[200px] font-mono text-sm ${errors.inputText ? 'border-destructive' : ''}`}
+              />
+              {errors.inputText && (
+                <p className="text-sm text-destructive mt-1">{errors.inputText}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between mt-4">
             <p className="text-sm text-muted-foreground">
               {inputText.length} caracteres
             </p>
@@ -378,7 +448,7 @@ Faixa recomendada: R$ ${Math.min(timeBased, complexityBased, valueBased).toLocal
               {isAnalyzing ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Analisando...
+                  Analisando com IA...
                 </>
               ) : (
                 <>
