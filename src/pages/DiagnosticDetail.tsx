@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AutomationSuggestionCard } from "@/components/diagnostics/AutomationSuggestionCard";
 import { QualityBadge } from "@/components/diagnostics/QualityBadge";
+import { MarkdownRenderer } from "@/components/diagnostics/MarkdownRenderer";
 import { ArrowLeft, Copy, FileText, DollarSign, Calendar, AlertCircle, Trash2 } from "lucide-react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -231,14 +232,14 @@ const DiagnosticDetail = () => {
 
           {/* Plan Document */}
           {diagnostic.plan_document && (
-            <Card className="p-6 mb-8">
-              <div className="flex items-start justify-between mb-4">
+            <Card className="p-6 mb-8 border-primary/20 shadow-lg">
+              <div className="flex items-start justify-between mb-6">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <FileText className="w-5 h-5 text-primary" />
+                  <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center shrink-0 shadow-elegant">
+                    <FileText className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-foreground mb-1">
+                    <h3 className="text-2xl font-bold text-foreground mb-1">
                       Plano de Trabalho
                     </h3>
                     <p className="text-sm text-muted-foreground">
@@ -256,24 +257,22 @@ const DiagnosticDetail = () => {
                 </Button>
               </div>
               
-              <div className="prose prose-sm max-w-none">
-                <div className="p-4 rounded-lg bg-muted/50 border border-border font-mono text-xs whitespace-pre-wrap">
-                  {diagnostic.plan_document}
-                </div>
+              <div className="p-6 rounded-xl bg-gradient-subtle border border-border/50">
+                <MarkdownRenderer content={diagnostic.plan_document} />
               </div>
             </Card>
           )}
 
           {/* Pricing Advice */}
           {diagnostic.pricing_advice && (
-            <Card className="p-6">
-              <div className="flex items-start justify-between mb-4">
+            <Card className="p-6 border-success/20 shadow-lg">
+              <div className="flex items-start justify-between mb-6">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
-                    <DollarSign className="w-5 h-5 text-success" />
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-success to-success/70 flex items-center justify-center shrink-0 shadow-elegant">
+                    <DollarSign className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-foreground mb-1">
+                    <h3 className="text-2xl font-bold text-foreground mb-1">
                       Orientação de Precificação
                     </h3>
                     <p className="text-sm text-muted-foreground">
@@ -291,10 +290,8 @@ const DiagnosticDetail = () => {
                 </Button>
               </div>
               
-              <div className="prose prose-sm max-w-none">
-                <div className="p-4 rounded-lg bg-muted/50 border border-border font-mono text-xs whitespace-pre-wrap">
-                  {diagnostic.pricing_advice}
-                </div>
+              <div className="p-6 rounded-xl bg-gradient-subtle border border-border/50">
+                <MarkdownRenderer content={diagnostic.pricing_advice} />
               </div>
             </Card>
           )}
