@@ -208,6 +208,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_admin_to_user: { Args: { _email: string }; Returns: undefined }
       check_and_increment_usage: { Args: { p_user_id: string }; Returns: Json }
       has_role: {
         Args: {
