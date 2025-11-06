@@ -15,6 +15,7 @@ export const useCreateDiagnostic = () => {
         .from('diagnostics')
         .insert({
           ...diagnostic,
+          user_id: user.id,
           generated_suggestions: diagnostic.generated_suggestions as any,
         } as any)
         .select()
