@@ -47,3 +47,22 @@ export interface DiagnosticUpdate {
   quality_score?: number;
   status?: 'pending' | 'in_progress' | 'completed';
 }
+
+export interface PromptTemplate {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  content: string;
+  default_content: string;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserRole {
+  id: string;
+  user_id: string;
+  role: 'admin' | 'user';
+  created_at: string;
+}

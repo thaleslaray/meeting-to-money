@@ -1,15 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, LogOut } from "lucide-react";
+import { Sparkles, LogOut, Settings } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 export const Header = () => {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const isLanding = location.pathname === "/";
   const { data: usageLimit } = useUsageLimit();
+  const { isAdmin } = useIsAdmin();
 
   const handleSignOut = async () => {
     await signOut();
@@ -43,6 +45,14 @@ export const Header = () => {
               <Button variant="ghost" asChild>
                 <Link to="/dashboard">Dashboard</Link>
               </Button>
+              {isAdmin && (
+                <Button variant="ghost" asChild>
+                  <Link to="/admin/prompts">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Prompts
+                  </Link>
+                </Button>
+              )}
               <Button variant="ghost" onClick={handleSignOut}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Sair

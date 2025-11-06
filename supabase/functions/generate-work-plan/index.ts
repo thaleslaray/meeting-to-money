@@ -35,6 +35,11 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY não configurada');
     }
 
+    // Inicializar cliente Supabase para buscar prompts
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     console.log(`Gerando plano e precificação para ${automations.length} automações`);
 
     // Preparar dados das automações para o contexto da IA
@@ -45,6 +50,19 @@ serve(async (req) => {
     const totalDays = automations.reduce((sum, a) => sum + a.estimatedDays, 0);
     const avgComplexity = automations.some(a => a.complexity === 'advanced') ? 'advanced' : 
                           automations.some(a => a.complexity === 'moderate') ? 'moderate' : 'easy';
+
+    // Buscar prompts customizados
+    const { data: planPromptData } = await supabase
+      .from('prompt_templates')
+      .select('content')
+      .eq('key', 'generate_plan_system')
+      .single();
+
+    const { data: pricingPromptData } = await supabase
+      .from('prompt_templates')
+      .select('content')
+      .eq('key', 'generate_pricing_system')
+      .single();
 
     // Gerar Plano de Trabalho
     console.log('Chamando Lovable AI para gerar plano de trabalho...');
@@ -98,7 +116,7 @@ REQUISITOS:
         messages: [
           { 
             role: 'system', 
-            content: 'Você é um gerente de projetos especializado em automação empresarial. Crie planos detalhados, realistas e profissionais.'
+            content: planPromptData?.content || 'Você é um gerente de projetos especializado em automação empresarial. Crie planos detalhados, realistas e profissionais.'
           },
           { role: 'user', content: planPrompt }
         ],
@@ -173,7 +191,7 @@ REQUISITOS CRÍTICOS:
         messages: [
           { 
             role: 'system', 
-            content: 'Você é um consultor de precificação especializado em projetos de automação. Calcule valores realistas entre R$ 1.000 e R$ 100.000, usando as 3 metodologias solicitadas.'
+            content: pricingPromptData?.content || 'Você é um consultor de precificação especializado em projetos de automação. Calcule valores realistas entre R$ 1.000 e R$ 100.000, usando as 3 metodologias solicitadas.'
           },
           { role: 'user', content: pricingPrompt }
         ],

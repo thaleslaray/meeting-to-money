@@ -25,6 +25,13 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Buscar prompt customizado
+    const { data: promptData } = await supabase
+      .from('prompt_templates')
+      .select('content')
+      .eq('key', 'analyze_diagnostic_system')
+      .single();
+
     // Buscar automações relevantes da base de conhecimento
     const { data: automations, error: dbError } = await supabase
       .from('automation_library')
@@ -47,7 +54,7 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    const systemPrompt = `Você é um especialista em automação de processos de negócios. 
+    const basePrompt = promptData?.content || `Você é um especialista em automação de processos de negócios. 
 Analise o texto da reunião e identifique EXATAMENTE 5 oportunidades de automação viáveis.
 Considere a base de conhecimento de automações disponíveis e sugira soluções práticas.
 
@@ -58,7 +65,9 @@ Para cada automação, retorne:
 - complexity: easy, moderate ou advanced
 - estimatedDays: prazo realista em dias
 - tools: ferramentas específicas recomendadas
-- priorityScore: número de 1 a 100 (quanto maior, mais prioritário)
+- priorityScore: número de 1 a 100 (quanto maior, mais prioritário)`;
+
+    const systemPrompt = `${basePrompt}
 
 Setor: ${sector}${automationContext}`;
 

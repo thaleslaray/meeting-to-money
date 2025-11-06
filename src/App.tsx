@@ -9,6 +9,7 @@ import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import NewDiagnostic from "./pages/NewDiagnostic";
 import DiagnosticDetail from "./pages/DiagnosticDetail";
+import AdminPrompts from "./pages/AdminPrompts";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
@@ -47,6 +48,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DiagnosticDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/prompts"
+              element={
+                <ProtectedRoute>
+                  <AdminPrompts />
                 </ProtectedRoute>
               }
             />
